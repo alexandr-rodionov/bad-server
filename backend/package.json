@@ -1,7 +1,9 @@
 {
   "name": "weblarek_backend",
   "version": "1.0.0",
-  "description": "< Добавьте описание проекта в свободной форме >",
+  "description": "WebLarek Backend Express+TypeScript",
+  "author": "Alexandr Rodionov",
+  "license": "ISC",
   "main": "dist/app.js",
   "scripts": {
     "lint": "npx eslint src/**/*.ts",
@@ -11,8 +13,11 @@
     "start": "ts-node src/app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "< Укажите здесь автора работы >",
-  "license": "ISC",
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm audit --audit-level=moderate"
+    }
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.7",
@@ -30,6 +35,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
+    "husky": "^9.1.7",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
