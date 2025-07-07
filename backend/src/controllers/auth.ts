@@ -84,10 +84,24 @@ const getCurrentUser = async (
     }
 }
 
+const decodeRefreshToken = (refreshToken: string): JwtPayload => {
+    try {
+        const decoded = jwt.verify(refreshToken, REFRESH_TOKEN.secret) as JwtPayload;
+
+        if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+            throw new UnauthorizedError('Ошибка проверки токена');
+        }
+
+        return decoded;
+    } catch (err) {
+        throw new UnauthorizedError('Ошибка проверки токена');
+    }
+}
+
 // Можно лучше: вынести общую логику получения данных из refresh токена
 const deleteRefreshTokenInUser = async (
     req: Request,
-    _res: Response,
+    res: Response,
     _next: NextFunction
 ) => {
     const { cookies } = req
@@ -97,13 +111,12 @@ const deleteRefreshTokenInUser = async (
         throw new UnauthorizedError('Не валидный токен')
     }
 
-    const decodedRefreshTkn = jwt.verify(
-        rfTkn,
-        REFRESH_TOKEN.secret
-    ) as JwtPayload
-    const user = await User.findOne({
-        _id: decodedRefreshTkn._id,
-    }).orFail(() => new UnauthorizedError('Пользователь не найден в базе'))
+    const decodedRefreshTkn = decodeRefreshToken(rfTkn)
+
+    const user = await User.findOne({ _id: decodedRefreshTkn._id }, 'tokens')
+    if (!user) {
+        throw new UnauthorizedError('Пользователь не найден')
+    }
 
     const rTknHash = crypto
         .createHmac('sha256', REFRESH_TOKEN.secret)
@@ -113,6 +126,8 @@ const deleteRefreshTokenInUser = async (
     user.tokens = user.tokens.filter((tokenObj) => tokenObj.token !== rTknHash)
 
     await user.save()
+
+    res.clearCookie(REFRESH_TOKEN.cookie.name)
 
     return user
 }
