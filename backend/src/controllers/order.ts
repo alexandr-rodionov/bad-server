@@ -152,7 +152,7 @@ export const getOrders = async (
                 totalOrders,
                 totalPages,
                 currentPage: Number(page),
-                pageSize: Number(limit),
+                pageSize: Number(normLimit),
             },
         })
     } catch (error) {

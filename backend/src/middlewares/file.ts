@@ -23,15 +23,14 @@ const storage = multer.diskStorage({
             )
         )
     },
-
     filename: (
         _req: Request,
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        const sanitizedFilename = sanitize(file.originalname);
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        const newFilename = uniqueSuffix + extname(sanitizedFilename);
+        const sanitizedFilename = sanitize(file.originalname)
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`
+        const newFilename = uniqueSuffix + extname(sanitizedFilename)
         cb(null, newFilename)
     },
 })
@@ -60,11 +59,11 @@ const fileFilter = (
     cb: FileFilterCallback
 ) => {
     if (!types.includes(file.mimetype)) {
-        return cb(new Error(`Недопустимый тип файла. Допустимые типы: ${types.join(', ')}`));
+        return cb(new Error(`Недопустимый тип файла. Допустимые типы: ${types.join(', ')}`))
     }
 
     if (file.size < fileSize.min) {
-        return cb(new Error(`Размер файла слишком маленький. Минимальный размер: 2 KB`));
+        return cb(new Error(`Размер файла слишком маленький. Минимальный размер: 2 KB`))
     }
 
     sharp(file.buffer)
@@ -72,14 +71,14 @@ const fileFilter = (
         .then((metadata) => {
             if (metadata.width != null && metadata.height != null &&
                (metadata.width < imgMinRes.width || metadata.height < imgMinRes.height)) {
-                return cb(new Error(`Минимальное разрешение изображения: ${imgMinRes.width}x${imgMinRes.height}px`));
+                return cb(new Error(`Минимальное разрешение изображения: ${imgMinRes.width}x${imgMinRes.height}px`))
             }
 
             return cb(null, true);
         })
-        .catch(() => cb(new Error('Ошибка анализа изображения')));
+        .catch(() => cb(new Error('Ошибка анализа изображения')))
 }
 
-const limits = { fileSize: fileSize.max, };
+const limits = { fileSize: fileSize.max, }
 
 export default multer({ storage, fileFilter, limits })
