@@ -1,6 +1,8 @@
 import { Express, Request } from 'express'
 import multer, { FileFilterCallback } from 'multer'
 import { join } from 'path'
+import sanitize from 'sanitize-filename'
+import sharp from 'sharp'
 
 type DestinationCallback = (error: Error | null, destination: string) => void
 type FileNameCallback = (error: Error | null, filename: string) => void
@@ -28,7 +30,8 @@ const storage = multer.diskStorage({
         cb: FileNameCallback
     ) => {
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        cb(null, `${uniqueSuffix}-${file.originalname}`)
+        const sanitizedFilename = sanitize(file.originalname);
+        cb(null, `${uniqueSuffix}-${sanitizedFilename}`)
     },
 })
 
@@ -40,18 +43,44 @@ const types = [
     'image/svg+xml',
 ]
 
+const fileSize = {
+    min: 2 * 1024,
+    max: 10 * 1024 * 1024,
+}
+
+const imgMinRes = {
+    width: 50,
+    height: 50,
+}
+
 const fileFilter = (
     _req: Request,
     file: Express.Multer.File,
     cb: FileFilterCallback
 ) => {
     if (!types.includes(file.mimetype)) {
-        return cb(null, false)
+        return cb(new Error(`Недопустимый тип файла. Допустимые: Допустимые: ${types.join(', ')}`));
     }
 
-    return cb(null, true)
+    if (file.size < fileSize.min) {
+        return cb(new Error(`Размер файла слишком маленький. Минимальный размер - 2 KB`));
+    }
+
+    sharp(file.buffer)
+        .metadata()
+        .then((metadata) => {
+            if (metadata.width != null && metadata.height != null &&
+               (metadata.width < imgMinRes.width || metadata.height < imgMinRes.height)) {
+                return cb(new Error(`Минимальное разрешение изображения: ${imgMinRes.width}x${imgMinRes.height}px`));
+            }
+
+            return cb(null, true);
+        })
+        .catch(() => {
+            return cb(new Error('Ошибка анализа изображения'));
+        });
 }
 
-const limits = { fileSize: 5 * 1024 * 1024, };
+const limits = { fileSize: fileSize.max, };
 
 export default multer({ storage, fileFilter, limits })

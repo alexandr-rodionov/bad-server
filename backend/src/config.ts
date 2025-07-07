@@ -2,9 +2,11 @@ import { CookieOptions } from 'express'
 import rateLimit from 'express-rate-limit'
 import ms from 'ms'
 
+type TCorsOrigin = string | undefined;
+type TCorsCallback = { (error: Error | null, allowAccess: boolean): void };
+
 export const { PORT = '3000' } = process.env
 export const { DB_ADDRESS = 'mongodb://127.0.0.1:27017/weblarek' } = process.env
-export const { ORIGIN_ALLOW = 'http://localhost:5173' } = process.env
 export const { JWT_SECRET = 'JWT_SECRET' } = process.env
 export const ACCESS_TOKEN = {
     secret: process.env.AUTH_ACCESS_TOKEN_SECRET || 'secret-dev',
@@ -31,3 +33,12 @@ export const RATE_LIMITER = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 })
+const whitelist = [process.env.ORIGIN_ALLOW || 'http://localhost:5173'];
+export const CORS_OPTIONS = {
+  origin: function(origin: TCorsOrigin, callback: TCorsCallback){
+    if(typeof origin === 'string' && whitelist.includes(origin) || !origin) callback(null, true)
+    else callback(new Error('Not allowed by CORS'), false)
+  },
+  credentials: true,
+  allowedHeaders: ['Authorization', 'Content-Type'],
+}
