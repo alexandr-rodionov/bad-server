@@ -42,6 +42,11 @@ export const getOrders = async (
 
         if (status) {
             if (typeof status === 'object') {
+                for (const key in status) {
+                    if (['$expr', '$function'].includes(key)) {
+                        throw new BadRequestError('Invalid filter parameter');
+                    }
+                }
                 Object.assign(filters, status)
             }
             if (typeof status === 'string') {
