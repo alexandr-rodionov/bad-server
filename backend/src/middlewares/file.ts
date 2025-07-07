@@ -1,7 +1,6 @@
 import { Express, Request } from 'express'
 import multer, { FileFilterCallback } from 'multer'
 import { extname, join } from 'path'
-import sanitize from 'sanitize-filename'
 import sharp from 'sharp'
 
 type DestinationCallback = (error: Error | null, destination: string) => void
@@ -13,24 +12,18 @@ const storage = multer.diskStorage({
         _file: Express.Multer.File,
         cb: DestinationCallback
     ) => {
-        cb(
-            null,
-            join(
-                __dirname,
-                process.env.UPLOAD_PATH_TEMP
-                    ? `../public/${process.env.UPLOAD_PATH_TEMP}`
-                    : '../public'
-            )
-        )
+        const uploadDir = join(__dirname, process.env.UPLOAD_PATH_TEMP ? `../public/${process.env.UPLOAD_PATH_TEMP}` : '../public')
+
+        cb(null, uploadDir)
     },
     filename: (
         _req: Request,
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        const sanitizedFilename = sanitize(file.originalname)
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`
-        const newFilename = uniqueSuffix + extname(sanitizedFilename)
+        const newFilename = uniqueSuffix + extname(file.originalname)
+
         cb(null, newFilename)
     },
 })
@@ -43,7 +36,7 @@ const types = [
     'image/svg+xml',
 ]
 
-const fileSize = {
+const fileSizeLimits = {
     min: 2 * 1024,
     max: 10 * 1024 * 1024,
 }
@@ -62,7 +55,7 @@ const fileFilter = (
         return cb(new Error(`Недопустимый тип файла. Допустимые типы: ${types.join(', ')}`))
     }
 
-    if (file.size < fileSize.min) {
+    if (file.size < fileSizeLimits.min) {
         return cb(new Error(`Размер файла слишком маленький. Минимальный размер: 2 KB`))
     }
 
@@ -79,6 +72,6 @@ const fileFilter = (
         .catch(() => cb(new Error('Ошибка анализа изображения')))
 }
 
-const limits = { fileSize: fileSize.max, }
+const limits = { fileSize: fileSizeLimits.max }
 
 export default multer({ storage, fileFilter, limits })
