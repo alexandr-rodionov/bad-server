@@ -77,9 +77,7 @@ const fileFilter = (
 
             return cb(null, true);
         })
-        .catch(() => {
-            return cb(new Error('Ошибка анализа изображения'));
-        });
+        .catch(() => cb(new Error('Ошибка анализа изображения')));
 }
 
 const limits = { fileSize: fileSize.max, };

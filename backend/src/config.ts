@@ -35,7 +35,7 @@ export const RATE_LIMITER = rateLimit({
 })
 const whitelist = [process.env.ORIGIN_ALLOW || 'http://localhost:5173'];
 export const CORS_OPTIONS = {
-  origin: function(origin: TCorsOrigin, callback: TCorsCallback){
+  origin(origin: TCorsOrigin, callback: TCorsCallback) {
     if(typeof origin === 'string' && whitelist.includes(origin) || !origin) callback(null, true)
     else callback(new Error('Not allowed by CORS'), false)
   },
