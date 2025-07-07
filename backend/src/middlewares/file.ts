@@ -1,6 +1,6 @@
 import { Express, Request } from 'express'
 import multer, { FileFilterCallback } from 'multer'
-import { join } from 'path'
+import { extname, join } from 'path'
 import sanitize from 'sanitize-filename'
 import sharp from 'sharp'
 
@@ -29,9 +29,10 @@ const storage = multer.diskStorage({
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
         const sanitizedFilename = sanitize(file.originalname);
-        cb(null, `${uniqueSuffix}-${sanitizedFilename}`)
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+        const newFilename = uniqueSuffix + extname(sanitizedFilename);
+        cb(null, newFilename)
     },
 })
 
@@ -59,11 +60,11 @@ const fileFilter = (
     cb: FileFilterCallback
 ) => {
     if (!types.includes(file.mimetype)) {
-        return cb(new Error(`Недопустимый тип файла. Допустимые: Допустимые: ${types.join(', ')}`));
+        return cb(new Error(`Недопустимый тип файла. Допустимые типы: ${types.join(', ')}`));
     }
 
     if (file.size < fileSize.min) {
-        return cb(new Error(`Размер файла слишком маленький. Минимальный размер - 2 KB`));
+        return cb(new Error(`Размер файла слишком маленький. Минимальный размер: 2 KB`));
     }
 
     sharp(file.buffer)
