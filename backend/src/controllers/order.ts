@@ -11,6 +11,17 @@ import escapeRegExp from '../utils/escapeRegExp'
 
 // eslint-disable-next-line max-len
 // GET /orders?page=2&limit=5&sort=totalAmount&order=desc&orderDateFrom=2024-07-01&orderDateTo=2024-08-01&status=delivering&totalAmountFrom=100&totalAmountTo=1000&search=%2B1
+const disallowedOperators = [
+    '$expr',
+    '$function',
+    '$where',
+    '$eval',
+    '$out',
+    '$mapReduce',
+    '$geoNear',
+    '$graphLookup',
+    '$merge'
+];
 
 export const getOrders = async (
     req: Request,
@@ -43,7 +54,7 @@ export const getOrders = async (
         if (status) {
             if (typeof status === 'object') {
                 for (const key in status) {
-                    if (['$expr', '$function'].includes(key)) {
+                    if (disallowedOperators.includes(key)) {
                         throw new BadRequestError('Invalid filter parameter');
                     }
                 }
