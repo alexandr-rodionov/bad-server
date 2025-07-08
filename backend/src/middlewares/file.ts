@@ -2,6 +2,14 @@ import { Express, Request } from 'express'
 import multer, { FileFilterCallback } from 'multer'
 import { extname, join } from 'path'
 import sharp from 'sharp'
+import fs from 'fs'
+import BadRequestError from '../errors/bad-request-error'
+
+const createDirectoryIfNotExist = (directory: string) => {
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
+};
 
 type DestinationCallback = (error: Error | null, destination: string) => void
 type FileNameCallback = (error: Error | null, filename: string) => void
@@ -14,8 +22,14 @@ const storage = multer.diskStorage({
     ) => {
         const uploadDir = join(__dirname, process.env.UPLOAD_PATH_TEMP ? `../public/${process.env.UPLOAD_PATH_TEMP}` : '../public')
 
-        cb(null, uploadDir)
-    },
+        try {
+            createDirectoryIfNotExist(uploadDir);
+
+            cb(null, uploadDir)
+        } catch (err) {
+            cb(new BadRequestError(`Не удалось создать директорию: ${err}`), uploadDir)
+        }
+   },
     filename: (
         _req: Request,
         file: Express.Multer.File,
@@ -52,11 +66,11 @@ const fileFilter = (
     cb: FileFilterCallback
 ) => {
     if (!types.includes(file.mimetype)) {
-        return cb(new Error(`Недопустимый тип файла. Допустимые типы: ${types.join(', ')}`))
+        return cb(new BadRequestError(`Недопустимый тип файла. Допустимые типы: ${types.join(', ')}`))
     }
 
     if (file.size < fileSizeLimits.min) {
-        return cb(new Error(`Размер файла слишком маленький. Минимальный размер: 2 KB`))
+        return cb(new BadRequestError(`Размер файла слишком маленький. Минимальный размер: 2 KB`))
     }
 
     sharp(file.buffer)
@@ -64,12 +78,12 @@ const fileFilter = (
         .then((metadata) => {
             if (metadata.width != null && metadata.height != null &&
                (metadata.width < imgMinRes.width || metadata.height < imgMinRes.height)) {
-                return cb(new Error(`Минимальное разрешение изображения: ${imgMinRes.width}x${imgMinRes.height}px`))
+                return cb(new BadRequestError(`Минимальное разрешение изображения: ${imgMinRes.width}x${imgMinRes.height}px`))
             }
 
             return cb(null, true);
         })
-        .catch(() => cb(new Error('Ошибка анализа изображения')))
+        .catch(() => cb(new BadRequestError('Ошибка анализа изображения')))
 }
 
 const limits = { fileSize: fileSizeLimits.max }

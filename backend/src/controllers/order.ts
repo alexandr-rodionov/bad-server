@@ -6,7 +6,6 @@ import NotFoundError from '../errors/not-found-error'
 import Order, { IOrder } from '../models/order'
 import Product, { IProduct } from '../models/product'
 import User from '../models/user'
-import ForbiddenError from '../errors/forbidden-error'
 import escapeRegExp from '../utils/escapeRegExp'
 
 // eslint-disable-next-line max-len
@@ -29,11 +28,6 @@ export const getOrders = async (
     next: NextFunction
 ) => {
     try {
-        const userRoles = res.locals.user.roles
-        if (!userRoles.includes('admin')) {
-            return next(new ForbiddenError('Forbidden!'))
-        }
-
         const {
             page = 1,
             limit = 10,
@@ -53,9 +47,13 @@ export const getOrders = async (
 
         if (status) {
             if (typeof status === 'object') {
-                for (const key in status) {
+                const keys = Object.keys(status)
+
+                for (let i = 0; i < keys.length; i+=1) {
+                    const key = keys[i];
+
                     if (disallowedOperators.includes(key)) {
-                        throw new BadRequestError('Invalid filter parameter');
+                        throw new BadRequestError('Invalid filter parameter')
                     }
                 }
                 Object.assign(filters, status)
