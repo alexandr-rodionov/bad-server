@@ -4,7 +4,6 @@ import ms from 'ms'
 
 export const { PORT = '3000' } = process.env
 export const { DB_ADDRESS = 'mongodb://127.0.0.1:27017/weblarek' } = process.env
-export const { ORIGIN_ALLOW = 'http://localhost:5173' } = process.env
 export const { JWT_SECRET = 'JWT_SECRET' } = process.env
 export const ACCESS_TOKEN = {
     secret: process.env.AUTH_ACCESS_TOKEN_SECRET || 'secret-dev',
@@ -35,11 +34,13 @@ export const RATE_LIMITER = rateLimit({
 type TCorsOrigin = string | undefined;
 type TCorsCallback = { (error: Error | null, allowAccess: boolean): void };
 
-const whitelist = [process.env.ORIGIN_ALLOW || 'http://localhost:5173'];
+const whitelist = typeof process.env.ORIGIN_ALLOW === 'string' && process.env.ORIGIN_ALLOW.trim().length > 0
+  ? [process.env.ORIGIN_ALLOW.trim()]
+  : ['http://localhost:5173'];
 export const CORS_OPTIONS = {
   origin(origin: TCorsOrigin, cb: TCorsCallback) {
-    if(typeof origin === 'string' && whitelist.includes(origin) || !origin) cb(null, true)
-    else cb(new Error('Not allowed by CORS'), false);
+    if (typeof origin === 'string' && whitelist.includes(origin) || !origin) cb(null, true)
+    else cb(new Error('Not allowed by CORS'), false)
   },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
