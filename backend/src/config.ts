@@ -37,9 +37,9 @@ type TCorsCallback = { (error: Error | null, allowAccess: boolean): void };
 
 const whitelist = [process.env.ORIGIN_ALLOW || 'http://localhost:5173'];
 export const CORS_OPTIONS = {
-  origin(origin: TCorsOrigin, callback: TCorsCallback) {
-    if(typeof origin === 'string' && whitelist.includes(origin) || !origin) callback(null, true)
-    else callback(new Error('Not allowed by CORS'), false);
+  origin(origin: TCorsOrigin, cb: TCorsCallback) {
+    if(typeof origin === 'string' && whitelist.includes(origin) || !origin) cb(null, true)
+    else cb(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
