@@ -15,7 +15,7 @@ const app = express()
 
 app.use(cookieParser())
 
-app.use(cors(CORS_OPTIONS));
+app.use(cors(CORS_OPTIONS))
 app.options('*', cors())
 
 app.use(serveStatic(path.join(__dirname, 'public')))
